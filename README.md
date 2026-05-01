@@ -6,19 +6,16 @@ A Python web API that routes an idea through a council of specialized AI agents,
 
 
 ```
-Council_XL/
-├── app/
-│   ├── main.py              # FastAPI entrypoint
-│   ├── db.py 
-│   ├── council/
-│   │   ├── agents.py        # Agent definitions (system prompts + model assignments)
-│   │   ├── runner.py        # Parallel execution + synthesis logic
-│   │   └── templates.py     # Output schema / report templates
-│   ├── api/
-│   │   └── routes.py        # POST /evaluate endpoint
-│   └── config.py            # 0G endpoint, API keys, model assignments
-├── tests/
-├── .env
-├── requirements.txt
-└── README.md
+Council_XL
+├── Frontend (Vite + React)
+│   ├── vite.config.ts          ← node polyfills required
+│   │   └── vite-plugin-node-polyfills
+│   │       (crypto, stream, util, buffer, process)
+│   └── WalletConnect integration
+│       └── @walletconnect/modal or wagmi
+│
+└── Inference Layer
+    ├── @0glabs/0g-serving-broker
+    ├── ethers
+    └── openai (optional, for OpenAI-compatible client)
 ```
