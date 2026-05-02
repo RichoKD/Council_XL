@@ -1,4 +1,3 @@
-import { WalletConnect } from './components/WalletConnect';
 import { CouncilUI } from './components/CouncilUI';
 import './App.css';
 
@@ -15,9 +14,6 @@ function App() {
         <div className="header-brand">
           <h1>Council_XL</h1>
           <span className="badge">0G Inference</span>
-        </div>
-        <div className="header-actions">
-          <WalletConnect />
         </div>
       </header>
 
@@ -41,3 +37,4 @@ function App() {
 }
 
 export default App
+

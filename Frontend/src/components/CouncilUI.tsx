@@ -1,157 +1,116 @@
 import React, { useState } from 'react';
-import { use0gBroker } from '../hooks/use0gBroker';
+
+const INFERENCE_URL = import.meta.env.VITE_INFERENCE_URL ?? 'http://localhost:3001';
+
+interface CouncilResult {
+    critiques: Record<string, string>;
+    finalPlan: string;
+}
+
+const AGENT_LABELS: Record<string, string> = {
+    'security-auditor': '🔒 Security Auditor',
+    'scalability-architect': '📐 Scalability Architect',
+    'product-manager': '🎯 Product Manager',
+};
 
 export function CouncilUI() {
-    const broker = use0gBroker();
-    const [providerAddress, setProviderAddress] = useState<string>('');
-    const [prompt, setPrompt] = useState<string>('');
-    const [amount, setAmount] = useState<string>('0.001');
-    const [response, setResponse] = useState<string>('');
+    const [idea, setIdea] = useState<string>('');
     const [status, setStatus] = useState<string>('');
+    const [loading, setLoading] = useState<boolean>(false);
+    const [result, setResult] = useState<CouncilResult | null>(null);
+    const [openAgent, setOpenAgent] = useState<string | null>(null);
 
-    const handleDeposit = async () => {
-        if (!broker || !amount) return;
-        try {
-            setStatus('Depositing funds...');
-            await broker.ledger.depositFund(amount);
-            setStatus('Deposit successful!');
-        } catch (err: any) {
-            console.error(err);
-            setStatus(`Deposit failed: ${err.message}`);
-        }
-    };
-
-    const handleTransfer = async () => {
-        if (!broker || !providerAddress || !amount) return;
-        try {
-            setStatus('Transferring to provider sub-account...');
-            await broker.ledger.transferFund(providerAddress, 'inference', amount);
-            setStatus('Transfer successful!');
-        } catch (err: any) {
-            console.error(err);
-            setStatus(`Transfer failed: ${err.message}`);
-        }
-    };
-
-    const handleCheckLedger = async () => {
-        if (!broker) return;
-        try {
-            setStatus('Checking ledger...');
-            const ledger = await broker.ledger.getLedger();
-            setStatus(`Ledger info: ${JSON.stringify(ledger)}`);
-        } catch (err: any) {
-            console.error(err);
-            setStatus(`Check Ledger failed: ${err.message}`);
-        }
-    };
-
-    const handlePromptSubmit = async () => {
-        if (!broker || !providerAddress || !prompt) {
-            setStatus('Please set provider endpoint URL and provider address.');
+    const handleSubmit = async () => {
+        if (!idea.trim()) {
+            setStatus('Please enter an idea before submitting.');
             return;
         }
 
-        // We assume the provider endpoint URL is provided as part of address for this demo, 
-        // or typically we query the provider registry. 
-        // For simplicity, we just ask for the URL in another field.
-        const endpointUrl = promptUrl || 'http://localhost:11434/v1/chat/completions';
+        setLoading(true);
+        setResult(null);
+        setStatus('Submitting to the AI Council…');
 
         try {
-            setStatus('Generating request headers...');
-            const content = prompt;
-            const { headers } = await broker.inference.getRequestHeaders(providerAddress, content);
-
-            setStatus('Sending request to AI Council...');
-            const res = await fetch(endpointUrl, {
+            const res = await fetch(`${INFERENCE_URL}/council`, {
                 method: 'POST',
-                headers: {
-                    ...headers,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    model: 'deepseek-coder',
-                    messages: [{ role: 'user', content }],
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idea: idea.trim() }),
             });
 
-            const data = await res.json();
             if (!res.ok) {
-                setStatus(`API Error: ${JSON.stringify(data)}`);
-                return;
+                const err = await res.json().catch(() => ({ error: res.statusText }));
+                throw new Error(err.error ?? `Server error ${res.status}`);
             }
 
-            setResponse(JSON.stringify(data.choices?.[0]?.message?.content || data, null, 2));
-            setStatus('Response received.');
+            const data: CouncilResult = await res.json();
+            setResult(data);
+            setStatus('');
         } catch (err: any) {
-            console.error(err);
-            setStatus(`Inference failed: ${err.message}`);
+            setStatus(`Error: ${err.message}`);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const [promptUrl, setPromptUrl] = useState<string>('');
-
-    if (!broker) {
-        return (
-            <div className="council-ui">
-                <p className="notice">Please connect your wallet to access the Council parameters.</p>
-            </div>
-        );
-    }
-
     return (
         <div className="council-ui glass-panel">
-            <h2>Council Parameters</h2>
-
-            <div className="form-group">
-                <label>Provider Endpoint URL</label>
-                <input
-                    type="text"
-                    value={promptUrl}
-                    onChange={(e) => setPromptUrl(e.target.value)}
-                    placeholder="https://example.provider.com/chat/completions"
-                />
-            </div>
-
-            <div className="form-group">
-                <label>Provider Address (0x...)</label>
-                <input
-                    type="text"
-                    value={providerAddress}
-                    onChange={(e) => setProviderAddress(e.target.value)}
-                    placeholder="0xProviderAddress"
-                />
-            </div>
-
-            <div className="ledger-controls">
-                <input
-                    type="number"
-                    value={amount}
-                    step="0.001"
-                    onChange={(e) => setAmount(e.target.value)}
-                />
-                <button className="btn" onClick={handleDeposit}>Deposit 0G</button>
-                <button className="btn" onClick={handleTransfer}>Transfer to Provider</button>
-                <button className="btn outline" onClick={handleCheckLedger}>Check Ledger</button>
-            </div>
+            <h2>Submit to the Council</h2>
 
             <div className="form-group prompt-group">
-                <label>Your Idea (Prompt)</label>
+                <label>Your Idea</label>
                 <textarea
                     rows={5}
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Describe your idea for the council to brutally stress-test..."
+                    value={idea}
+                    onChange={(e) => setIdea(e.target.value)}
+                    placeholder="Describe your idea for the council to brutally stress-test…"
+                    disabled={loading}
                 />
             </div>
 
-            <button className="submit-btn" onClick={handlePromptSubmit}>Submit to Council</button>
+            <button
+                className="submit-btn"
+                onClick={handleSubmit}
+                disabled={loading || !idea.trim()}
+            >
+                {loading ? (
+                    <span className="spinner-text">⏳ Council deliberating…</span>
+                ) : (
+                    'Submit to Council'
+                )}
+            </button>
 
             {status && <div className="status-indicator">{status}</div>}
 
-            {response && (
-                <div className="response-container">
-                    <h3>Council Synthesis</h3>
-                    <pre>{response}</pre>
+            {result && (
+                <div className="results-container">
+                    {/* Per-agent critiques */}
+                    <h3 className="results-heading">Council Critiques</h3>
+                    <div className="critiques-list">
+                        {Object.entries(result.critiques).map(([agentId, text]) => (
+                            <div key={agentId} className="critique-card glass-panel">
+                                <button
+                                    className="critique-toggle"
+                                    onClick={() =>
+                                        setOpenAgent(openAgent === agentId ? null : agentId)
+                                    }
+                                >
+                                    {AGENT_LABELS[agentId] ?? agentId}
+                                    <span className="chevron">
+                                        {openAgent === agentId ? '▲' : '▼'}
+                                    </span>
+                                </button>
+                                {openAgent === agentId && (
+                                    <pre className="critique-body">{text}</pre>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Final implementation plan */}
+                    <h3 className="results-heading">Implementation Plan</h3>
+                    <div className="final-plan glass-panel">
+                        <pre>{result.finalPlan}</pre>
+                    </div>
                 </div>
             )}
         </div>
