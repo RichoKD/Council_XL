@@ -7,15 +7,15 @@
 │                        USER / BROWSER                           │
 │                                                                 │
 │   ┌──────────────┐        ┌──────────────────────────────────┐  │
-│   │  WalletConnect│◄──────►│        Council_XL Frontend       │  │
+│   │ WalletConnect│◄──────►│        Council_XL Frontend       │  │
 │   │   (Wallet)   │  sign  │   (AI Council Templating UI)     │  │
 │   └──────┬───────┘        └────────────────┬─────────────────┘  │
-│          │ EIP-1193 provider               │ inference request   │
+│          │ EIP-1193 provider               │ inference request  │
 └──────────┼─────────────────────────────────┼────────────────────┘
            │                                 │
            ▼                                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                     0G SERVING BROKER SDK                        │
+│                     0G SERVING BROKER SDK                       │
 │               (@0glabs/0g-serving-broker + ethers.js)           │
 │                                                                 │
 │   BrowserProvider(walletConnectProvider)                        │
@@ -29,22 +29,22 @@
 │   │  transferFund()      │   │  processResponse()           │   │
 │   │  getLedger()         │   │  (single-use per request)    │   │
 │   └──────────┬───────────┘   └──────────────┬───────────────┘   │
-└──────────────┼──────────────────────────────┼────────────────────┘
+└──────────────┼──────────────────────────────┼───────────────────┘
                │ on-chain tx                  │ signed HTTP headers
                ▼                              ▼
 ┌──────────────────────────┐   ┌─────────────────────────────────┐
-│      0G CHAIN (L1)        │   │      0G COMPUTE NETWORK          │
+│      0G CHAIN (L1)       │   │      0G COMPUTE NETWORK         │
 │   EVM-compatible, EIP-   │   │   (GPU Provider Marketplace)    │
 │   1193, Mainnet/Testnet  │   │                                 │
 │                          │   │  ┌───────────────────────────┐  │
-│  Smart Contracts:        │   │  │   Provider Endpoint        │  │
-│  - Payment settlement    │   │  │   (OpenAI-compatible API)  │  │
-│  - Sub-account ledger    │   │  │                            │  │
-│  - Provider registry     │   │  │  POST /chat/completions    │  │
-│  - Fee coordination      │   │  │  POST /v1/proxy (secret)   │  │
+│  Smart Contracts:        │   │  │   Provider Endpoint       │  │
+│  - Payment settlement    │   │  │   (OpenAI-compatible API) │  │
+│  - Sub-account ledger    │   │  │                           │  │
+│  - Provider registry     │   │  │  POST /chat/completions   │  │
+│  - Fee coordination      │   │  │  POST /v1/proxy (secret)  │  │
 │                          │   │  └───────────────────────────┘  │
 │  RPC Endpoints:          │   │                                 │
-│  Mainnet: evmrpc.0g.ai   │   │  Models: LLMs, text-to-image,  │
+│  Mainnet: evmrpc.0g.ai   │   │  Models: LLMs, text-to-image,   │
 │  Testnet: evmrpc-        │   │  speech-to-text, fine-tuned     │
 │   testnet.0g.ai          │   │                                 │
 └──────────────────────────┘   └─────────────────────────────────┘
