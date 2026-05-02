@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 const INFERENCE_URL = import.meta.env.VITE_INFERENCE_URL ?? 'http://localhost:3001';
 
